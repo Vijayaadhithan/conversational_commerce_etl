@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Vijayaadhithan/conversational_commerce_etl/schema/product-v1.schema.json",
+  "title": "Historical normalized Amazon parent product v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "product_id", "parent_asin", "title", "category", "brand", "store", "price", "categories", "attributes", "content", "content_source_fields", "image_urls", "rating", "availability", "selected_observation", "quality", "observations"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "product_id": {"type": "string", "pattern": "^amazon:[A-Z0-9]{10}$"},
+    "parent_asin": {"type": "string", "pattern": "^[A-Z0-9]{10}$"},
+    "title": {"type": "string", "minLength": 1},
+    "category": {
+      "type": "object", "required": ["domain", "family", "basis", "evidence"], "additionalProperties": false,
+      "properties": {
+        "domain": {"enum": ["beauty", "fashion", "unknown"]},
+        "family": {"type": "string"},
+        "basis": {"enum": ["category_rule", "title_rule", "out_of_scope_rule", null]},
+        "evidence": {"anyOf": [{"type": "null"}, {"type": "object", "required": ["field", "text"], "properties": {"field": {"type": "string"}, "text": {"type": "string"}}, "additionalProperties": false}]}
+      }
+    },
+    "brand": {"$ref": "#/$defs/claim"},
+    "store": {"type": ["string", "null"]},
+    "price": {
+      "type": "object", "required": ["amount", "currency", "status", "parse_status", "field", "observed_value"], "additionalProperties": false,
+      "properties": {
+        "amount": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^[0-9]+\\.[0-9]{2}$"}]},
+        "currency": {"enum": ["USD", null]}, "status": {"enum": ["historical", "unknown"]},
+        "parse_status": {"enum": ["valid", "missing", "invalid", "unsupported_currency"]},
+        "field": {"const": "/price"}, "observed_value": {}
+      }
+    },
+    "categories": {"type": "array", "items": {"type": "string"}},
+    "attributes": {"type": "object", "additionalProperties": {"$ref": "#/$defs/claim"}},
+    "content": {"$ref": "#/$defs/textLists"},
+    "content_source_fields": {"$ref": "#/$defs/textLists"},
+    "image_urls": {"type": "array", "items": {"type": "string", "pattern": "^https?://"}, "uniqueItems": true},
+    "rating": {"type": "object", "required": ["average", "count"], "additionalProperties": false, "properties": {"average": {"type": ["number", "null"], "minimum": 0, "maximum": 5}, "count": {"type": ["integer", "null"], "minimum": 0}}},
+    "availability": {"type": "null"},
+    "selected_observation": {"$ref": "#/$defs/observation"},
+    "observations": {"type": "array", "minItems": 1, "items": {"allOf": [{"$ref": "#/$defs/observation"}], "required": ["selected"], "properties": {"selected": {"type": "boolean"}}}},
+    "quality": {"type": "object", "required": ["score", "warnings", "conflicting_fields", "eligible_for_subset"], "additionalProperties": false, "properties": {"score": {"type": "integer", "minimum": 0}, "warnings": {"type": "array", "items": {"type": "string"}}, "conflicting_fields": {"type": "array", "items": {"type": "string"}}, "eligible_for_subset": {"type": "boolean"}}}
+  },
+  "$defs": {
+    "claim": {"anyOf": [{"type": "null"}, {"type": "object", "required": ["value", "field", "status"], "additionalProperties": false, "properties": {"value": {"type": ["string", "boolean"]}, "field": {"type": "string"}, "status": {"const": "listing_claim"}}}]},
+    "textLists": {"type": "object", "required": ["description", "features"], "additionalProperties": false, "properties": {"description": {"type": "array", "items": {"type": "string"}}, "features": {"type": "array", "items": {"type": "string"}}}},
+    "observation": {"type": "object", "required": ["source", "row", "record_sha256"], "properties": {"source": {"type": "string"}, "row": {"type": "integer", "minimum": 1}, "record_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}
+  }
+}

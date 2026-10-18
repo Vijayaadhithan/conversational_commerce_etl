@@ -1,0 +1,9 @@
+{
+  "dataset": "Amazon Reviews 2023 product metadata",
+  "currency": "USD",
+  "sources": [
+    {"name": "All_Beauty", "filename": "meta_All_Beauty.jsonl.gz", "expected_rows": 112590, "sha256": "51f8255c2794afd60e274c10d3e2d09dc1f671eba4ba35f74f748d8631216d05", "url": "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_All_Beauty.jsonl.gz"},
+    {"name": "Amazon_Fashion", "filename": "meta_Amazon_Fashion.jsonl.gz", "expected_rows": 826108, "sha256": "0b121c7494b0216ba3bf80adce9c79286fe08f14086966f841fe6716e1a24b73", "url": "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_Amazon_Fashion.jsonl.gz"},
+    {"name": "Beauty_and_Personal_Care", "filename": "meta_Beauty_and_Personal_Care.jsonl.gz", "expected_rows": 1028914, "sha256": "9b5ff26c24368f8844637e01f6c3190e00933a776d36afb4ae00b5074b1375c0", "url": "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_Beauty_and_Personal_Care.jsonl.gz"}
+  ]
+}
