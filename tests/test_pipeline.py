@@ -63,7 +63,7 @@ def test_complete_exports_schema_provenance_and_conflict_exclusion(tmp_path):
     assert subset[0]["product_id"] == "amazon:B000000002"
     quality = json.loads((directory / "data_quality.json").read_text())
     assert quality["duplicate_observations"] == 1 and quality["subset_shortfall"] == 19
-    assert not (directory / "work.sqlite3").exists()
+    assert not (directory / "work.duckdb").exists()
 
 
 def test_reproducible_gzip_subset_and_safe_reuse(tmp_path):

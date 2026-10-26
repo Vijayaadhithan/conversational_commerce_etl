@@ -67,6 +67,8 @@ Completed runs live under `data/processed/runs/<run_id>/`:
 | `catalog.jsonl.gz` | Complete normalized catalog, one record per valid parent product ID |
 | `subset.jsonl` | Up to 20,000 quality-eligible products with balanced strata |
 | `data_quality.json` | Full record counts, field/type coverage, categories, rejected rows, conflicts, and subset composition |
+| `catalog.parquet`, `subset.parquet` | Typed product fields plus lossless `document_json` |
+| `observations.parquet` | Source-row provenance for accepted observations |
 | `data_quality.md` | Human-readable quality report |
 | `rejects.jsonl` | Source/row/hash/reason for unusable records; original lines remain in the archives |
 | `manifest.json` | Schema/pipeline/code versions, input checksums, parameters, output counts and checksums |
@@ -83,9 +85,11 @@ run verifies its output checksums and reuses it. Use `--keep-work-db` to retain
 the deduplication database for local inspection; normally it is removed after
 successful export.
 
-The pipeline streams records and uses a SQLite work database with a bounded
-64 MiB page cache and disk-backed temporary storage. Allow disk headroom for the
-database, exports, and sorting; this is intentionally not an in-memory ETL.
+The pipeline uses DuckDB bulk staging, deduplication, and Parquet export. Defaults
+are `DUCKDB_MEMORY_LIMIT=2GB`, `DUCKDB_THREADS=1`, and Parquet row groups of 8,192.
+DuckDB spills into the run directory; allow disk space for staging, sorting, and
+both Parquet and JSONL outputs. Memory limits cover DuckDB-managed memory, not
+all Python/process memory.
 
 ## Normalization rules
 
@@ -149,3 +153,42 @@ conversation routing remain downstream work in the recommendation backend.
 Tests cover price parsing, unknown fields, conservative classification, source
 evidence, duplicate conflicts, coherent winner selection, quarantine, schema
 compliance, deterministic exports/subsets, integrity checks, and safe publication.
+
+## Retained-ID handoff and version support
+
+Pipeline version 2 is the supported DuckDB/Parquet contract. Version-1 manifests are
+rejected explicitly. The backend still imports `manifest.json` and `subset.jsonl`;
+keep compatibility JSONL alongside Parquet. The full verifier compares Parquet and
+JSONL, exact decimal/null semantics, provenance, counts, and checksums.
+
+```bash
+.venv/bin/python scripts/run_etl.py --subset-size 50000
+.venv/bin/python scripts/verify_outputs.py
+```
+
+A new balanced subset can contain different IDs. For the existing demo, select its
+retained IDs using the checked compact reference instead:
+
+```bash
+.venv/bin/python scripts/select_retained_subset.py --check-only \
+  --reference-manifest ../conversational_commerce/data/evaluation/retained_demo_ids.manifest.json
+```
+
+The check-only command writes no output or pointers. For a new published handoff,
+replace `--check-only` with `--output-dir PATH`. The command verifies source identity,
+all retained IDs, eligibility, and unchanged document hashes. Output is deterministic,
+locked, versioned, and published atomically; input/output overlap is refused.
+Then stage and verify the handoff with the backend importer before indexing/publication.
+
+## Output retention
+
+Keep the active ETL run and every artifact referenced by active or rollback backend
+generations. Keep raw sources, all checksum-listed outputs (including `data_quality.md`),
+and the compact retained-ID reference. Do not remove JSONL until its consumers migrate.
+Use an explicit path allowlist after backend-reference checks, with the output directory's
+`.etl.lock` held and no writers running. Preserve the lock inode and `current.json`.
+Age alone does not establish that a run is unused. Unfinished runs need inspection.
+
+Backend generation cleanup is documented in `../conversational_commerce/docs/operations.md`.
+The completed cleanup's JSON audit records remain in that repository's
+`data/operations/cleanup_2026-10-26/`; they are not scripts to rerun.

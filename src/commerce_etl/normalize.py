@@ -41,14 +41,6 @@ def text(value):
     return result or None
 
 
-def texts(value):
-    if isinstance(value, str):
-        value = [value]
-    if not isinstance(value, list):
-        return []
-    return [clean for item in value if (clean := text(item))]
-
-
 def evidenced_texts(value, field):
     if isinstance(value, str):
         clean = text(value)
