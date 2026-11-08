@@ -142,7 +142,11 @@ for every subset record. It also checks each subset record is identical to its
 canonical full-catalog record.
 
 Catalog ingestion into PostgreSQL, embedding generation, vector search, and
-conversation routing remain downstream work in the recommendation backend.
+conversation routing belong to the recommendation backend. PostgreSQL stores product
+records and generation metadata; backend-owned Parquet snapshots store embeddings,
+and Qdrant serves dense/BM25 retrieval. The ETL does not store embeddings or require
+a PostgreSQL vector extension. ETL Parquet outputs and backend embedding snapshots
+are separate artifacts with separate ownership and retention.
 
 ## Tests
 
